@@ -1,26 +1,53 @@
-import type { Component } from 'solid-js';
+import { Component, lazy, createSignal, onMount, JSX } from "solid-js";
+import { Routes, Route, Router, useParams, Outlet, Navigate } from "@solidjs/router";
+import {
+  I18nContext,
+  createI18nContext,
+  useI18n,
+} from "@solid-primitives/i18n";
 
-import logo from './logo.svg';
-import styles from './App.module.css';
+const Home = lazy(() => import("./components/Home"));
+const About = lazy(() => import("./components/About"));
+
+const dict = {
+  fr: {
+    hello: "bonjour {{ name }}, comment vas-tu ?",
+  },
+  en: {
+    hello: "hello {{ name }}, how are you?",
+  },
+};
+
+const value = createI18nContext(dict, "fr");
+
+const AppWrapper: Component = () => {
+  const params = useParams();
+  const [t, { locale }] = useI18n();
+
+  const lang = params.lang === "" ? "en" : params.lang;
+
+  locale(lang);
+
+  return (
+    <>
+      <Outlet />
+    </>
+  );
+};
 
 const App: Component = () => {
   return (
-    <div class={styles.App}>
-      <header class={styles.header}>
-        <img src={logo} class={styles.logo} alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          class={styles.link}
-          href="https://github.com/solidjs/solid"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn Solid
-        </a>
-      </header>
-    </div>
+    <I18nContext.Provider value={value}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate href="/en" />} />
+          <Route path="/:lang" component={AppWrapper}>
+            <Route path="/" component={Home} />
+            <Route path="/about" component={About} />
+          </Route>
+        </Routes>
+      </Router>
+    </I18nContext.Provider>
   );
 };
 
